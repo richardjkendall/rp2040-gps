@@ -8,10 +8,10 @@ include(pico_sdk_import.cmake)
 project(rp2040-gps VERSION 1.0.0)
  
 # Link the Project to a source file (step 4.6)
-add_executable(rp2040-gps source.c)
+add_executable(rp2040-gps source.c gps.c core1.c pwm.c)
  
 # Link the Project to an extra library (pico_stdlib)
-target_link_libraries(rp2040-gps pico_stdlib)
+target_link_libraries(rp2040-gps pico_stdlib hardware_pwm pico_multicore)
  
 # Initalise the SDK
 pico_sdk_init()
