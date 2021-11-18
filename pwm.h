@@ -1,10 +1,16 @@
+struct Led {
+  int redpin;
+  int greenpin;
+  int bluepin;
+};
+
 struct Colour {
   int red;
   int green;
   int blue;
 };
 
-void setup_pwm();
-void set_led1(struct Colour led);
-void fade_between(struct Colour from, struct Colour to, int steps, int step);
+void setup_pwm(struct Led led, int limit);
+void set_led(struct Colour colour, struct Led led, int limit);
+void fade_between(struct Led led, struct Colour from, struct Colour to, int steps, int step, int limit);
 

@@ -2,7 +2,19 @@
 #include "core1.h"
 #include "pwm.h"
 
-struct Colour colours[] = {
+#define MAX_PWM 1024
+
+#define LED1_RED 10
+#define LED1_GRN 11
+#define LED1_BLU 13
+#define LED2_RED 19
+#define LED2_GRN 17
+#define LED2_BLU 15
+
+const struct Led led1 = { .redpin = LED1_RED, .greenpin = LED1_GRN, .bluepin = LED1_BLU };
+const struct Led led2 = { .redpin = LED2_RED, .greenpin = LED2_GRN, .bluepin = LED2_BLU };
+
+const struct Colour colours[] = {
   { .red = 1024, .green = 0, .blue = 0 },     // red
   { .red = 1024, .green = 1024, .blue = 0 },     // yellow
   { .red = 0, .green = 1024, .blue = 0 },     // green
@@ -10,7 +22,6 @@ struct Colour colours[] = {
   { .red = 1024, .green = 1024, .blue = 1024 },     // white
   { .red = 0, .green = 0, .blue = 1024 },     // blue
   { .red = 1024, .green = 0, .blue = 1024 }  // purple
-
 }; 
 
 struct Colour from;
@@ -51,19 +62,17 @@ void core1_entry() {
   irq_set_exclusive_handler(SIO_IRQ_PROC1, core1_interrupt_handler);
   irq_set_enabled(SIO_IRQ_PROC1, true);
 
-  // setup pwm
-  setup_pwm();
-  //struct Colour cur = purple;
-  //led1 = purple;
-  //set_led1(cur);
+  // setup pwm for led 1
+  setup_pwm(led1, MAX_PWM);
+
+  // setup pwm for led 2
+  setup_pwm(led2, MAX_PWM);
 
   while(true) {
-    /*if(cur.blue != led1.blue || cur.green != led1.green || cur.red != led1.red) {
-      set_led1(led1);
-      cur = led1;
-    }*/
-    fade_between(from, to, 50, step);
-    //printf("s: %d\n", step);
+    // handle led1
+    fade_between(led1, from, to, 50, step, MAX_PWM);
+    // handle led2
+    fade_between(led2, to, from, 50, step, MAX_PWM);
     step++;
     sleep_ms(20);
     //tight_loop_contents();
