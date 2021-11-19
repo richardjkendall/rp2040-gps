@@ -19,13 +19,30 @@ const struct Colour yellow = { .red = 1024, .green = 1024, .blue = 0 };
 const struct Colour green = { .red = 0, .green = 1024, .blue = 0 };
 const struct Colour turq = { .red = 0, .green = 1024, .blue = 1024 };
 const struct Colour white = { .red = 1024, .green = 1024, .blue = 1024 };
+const struct Colour dimwhite = { .red = 256, .green = 256, .blue = 256 };
 const struct Colour blue = { .red = 0, .green = 0, .blue = 1024 };
 const struct Colour purple = { .red = 1024, .green = 0, .blue = 1024 };
-const struct Colour orange = { .red = 1024, .green = 512, .blue = 0 };
+const struct Colour orange = { .red = 1024, .green = 256, .blue = 0 };
 const struct Colour black = { .red = 0, .green = 0, .blue = 0 };
 
 const struct Pattern patterns[] = {
-  { .steps = 2, .stepdelay = 2, .led1colours = { red, green }, .led2colours = { green, red } }
+  /* 00 */ { .steps = 2, .stepdelay = 2, .fade = true, .led1colours = { red, green }, .led2colours = { green, red } },
+  /* 01 */ { .steps = 3, .stepdelay = 1, .fade = true, .led1colours = { white, black, turq }, .led2colours = { turq, white, black } },
+  /* 02 */ { .steps = 2, .stepdelay = 1, .fade = true, .led1colours = { blue, black }, .led2colours = { black, blue } },
+  /* 03 */ { .steps = 6, .stepdelay = 2, .fade = true, .led1colours = { red, orange, yellow, green, turq, blue }, .led2colours = { red, orange, yellow, green, turq, blue } },
+  /* 04 */ { .steps = 3, .stepdelay = 3, .fade = true, .led1colours = { white, black, black }, .led2colours = { white, black, black } },
+  /* 05 */ { .steps = 3, .stepdelay = 3, .fade = true, .led1colours = { white, blue, black }, .led2colours = { white, blue, black } },
+  /* 06 */ { .steps = 4, .stepdelay = 1, .fade = true, .led1colours = { blue, red, green, yellow }, .led2colours = { red, blue, yellow, green } },
+  /* 07 */ { .steps = 2, .stepdelay = 1, .fade = true, .led1colours = { white, dimwhite }, .led2colours = { dimwhite, white } },
+  /* 08 */ { .steps = 2, .stepdelay = 1, .fade = true, .led1colours = { blue, turq }, .led2colours = { blue, turq } },
+  /* 09 */ { .steps = 3, .stepdelay = 4, .fade = true, .led1colours = { black, orange, black }, .led2colours = { black, orange, black } },
+  /* 10 */ { .steps = 2, .stepdelay = 1, .fade = true, .led1colours = { red, blue }, .led2colours = { blue, red} },
+  /* 11 */ { .steps = 2, .stepdelay = 1, .fade = false, .led1colours = { white, black }, .led2colours = { white, black } },
+  /* 12 */ { .steps = 4, .stepdelay = 1, .fade = false, .led1colours = { blue, red, green, yellow }, .led2colours = { red, blue, yellow, green } },
+  /* 13 */ { .steps = 2, .stepdelay = 1, .fade = false, .led1colours = { purple, orange }, .led2colours = { orange, purple } },
+  /* 14 */ { .steps = 2, .stepdelay = 3, .fade = true, .led1colours = { red, black }, .led2colours = { red, black } },
+  /* 15 */ { .steps = 3, .stepdelay = 3, .fade = true, .led1colours = { green, black, black }, .led2colours = { green, black, black } },
+  /* 16 */ { .steps = 4, .stepdelay = 2, .fade = true, .led1colours = { white, turq, green, blue }, .led2colours = { blue, green, turq, white } },
 };
 
 struct Colour from_led1;
@@ -35,7 +52,7 @@ struct Colour to_led2;
 
 int step = 0;
 int col = 0;
-int pattern = 0;
+int pattern = 16;
 int pattern_step = 0;
 
 // Core 1 interrupt Handler
@@ -90,12 +107,13 @@ void core1_entry() {
   while(true) {
     // get max step count
     int maxstep = patterns[pattern].stepdelay * 50;
+    bool fade = patterns[pattern].fade;
 
     // handle led1
-    fade_between(led1, from_led1, to_led1, maxstep, step, MAX_PWM);
+    fade_between(led1, from_led1, to_led1, maxstep, fade ? step : maxstep, MAX_PWM);
 
     // handle led2
-    fade_between(led2, from_led2, to_led2, maxstep, step, MAX_PWM);
+    fade_between(led2, from_led2, to_led2, maxstep, fade ? step : maxstep, MAX_PWM);
 
     step++;
     sleep_ms(20);

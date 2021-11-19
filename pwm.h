@@ -13,6 +13,7 @@ struct Colour {
 struct Pattern {
   int steps;
   int stepdelay;
+  bool fade;
   struct Colour led1colours[10];
   struct Colour led2colours[10];
 };
