@@ -40,7 +40,7 @@ void process_time() {
     data = (time.hour & HR_MASK) << 12;
     data |= (time.minute & MINSEC_MASK) << 6;
     data |= (time.second & MINSEC_MASK);
-    printf("Encoded time as uint32_t %d\n", data);
+    //printf("Encoded time as uint32_t %d\n", data);
     multicore_fifo_push_blocking(data);
   } 
 }

@@ -24,6 +24,12 @@ const struct Colour blue = { .red = 0, .green = 0, .blue = 1024 };
 const struct Colour purple = { .red = 1024, .green = 0, .blue = 1024 };
 const struct Colour orange = { .red = 1024, .green = 256, .blue = 0 };
 const struct Colour black = { .red = 0, .green = 0, .blue = 0 };
+const struct Colour dimgreen = { .red = 0, .green = 512, .blue = 0 };
+const struct Colour dimred = { .red = 512, .green = 0, .blue = 0 };
+const struct Colour dimblue = { .red = 0, .green = 0, .blue = 256 };
+
+
+
 
 const struct Pattern patterns[] = {
   /* 00 */ { .steps = 2, .stepdelay = 2, .fade = true, .led1colours = { red, green }, .led2colours = { green, red } },
@@ -43,6 +49,14 @@ const struct Pattern patterns[] = {
   /* 14 */ { .steps = 2, .stepdelay = 3, .fade = true, .led1colours = { red, black }, .led2colours = { red, black } },
   /* 15 */ { .steps = 3, .stepdelay = 3, .fade = true, .led1colours = { green, black, black }, .led2colours = { green, black, black } },
   /* 16 */ { .steps = 4, .stepdelay = 2, .fade = true, .led1colours = { white, turq, green, blue }, .led2colours = { blue, green, turq, white } },
+  /* 17 */ { .steps = 3, .stepdelay = 3, .fade = true, .led1colours = { purple, black, black }, .led2colours = { purple, black, black } },
+  /* 18 */ { .steps = 3, .stepdelay = 4, .fade = true, .led1colours = { purple, black, black }, .led2colours = { black, black, blue } },
+  /* 19 */ { .steps = 2, .stepdelay = 2, .fade = false, .led1colours = { dimred, dimgreen }, .led2colours = { dimred, dimgreen } },
+  /* 20 */ { .steps = 2, .stepdelay = 1, .fade = true, .led1colours = { dimwhite, orange }, .led2colours = { orange, dimwhite } },
+  /* 21 */ { .steps = 7, .stepdelay = 2, .fade = false, .led1colours = { red, orange, yellow, green, turq, blue, purple }, .led2colours = { red, orange, yellow, green, turq, blue, purple } },
+  /* 22 */ { .steps = 3, .stepdelay = 5, .fade = true, .led1colours = { dimwhite, black, black }, .led2colours = { dimwhite, black, black } },
+  /* 23 */ { .steps = 3, .stepdelay = 5, .fade = true, .led1colours = { dimblue, black, black }, .led2colours = { dimblue, black, black } },
+  /* 24 */ { .steps = 5, .stepdelay = 1, .fade = false, .led1colours = { yellow, black, yellow, black, black  }, .led2colours = { yellow, black, yellow, black, black } },
 };
 
 struct Colour from_led1;
@@ -52,8 +66,10 @@ struct Colour to_led2;
 
 int step = 0;
 int col = 0;
-int pattern = 16;
+int pattern = 24;       // start with pattern 24 during startup
 int pattern_step = 0;
+
+int last_hour = -1;
 
 // Core 1 interrupt Handler
 void core1_interrupt_handler() {
@@ -64,6 +80,18 @@ void core1_interrupt_handler() {
     uint32_t min = (raw >> 6) & 63;
     uint32_t hr = (raw >> 12) & 31;
     printf("Recovered time %d:%d:%d\n", hr, min, sec);  
+
+    // set pattern based on hour
+    // check time is not all 0
+    if(hr + min + sec != 0) {
+      if(hr != last_hour) {
+        printf("Setting pattern %d\n", hr);
+        pattern = hr;
+        pattern_step = 0;
+        step = 0;
+        last_hour = hr;
+      }
+    } 
 
     if (sec % patterns[pattern].stepdelay == 0) {
       if(pattern_step == patterns[pattern].steps) {
