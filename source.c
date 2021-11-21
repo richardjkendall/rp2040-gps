@@ -5,6 +5,7 @@
 // UART details
 #define UART_ID uart0
 #define BAUD_RATE 9600
+
 // pins that GPS module UART is connected to
 #define UART_TX_PIN 0
 #define UART_RX_PIN 1
@@ -17,30 +18,16 @@ const uint32_t HR_MASK = 31;
 char buffer[100] = {0};
 int pos = 0;
 
-/*
-hour 0 - 23
-min  0 - 59
-sec  0 - 59
-
-om parsing 8:31:6
-Encoded time as uint32_t 34758
-
-1000 011111 000110
-
-*/
-
 void process_time() {
   char *field[20];
 
   struct GpsTime time;
   int result = nmea_sentence_to_time(buffer, &time);
   if(result) {
-    //printf("Time from parsing %d:%d:%d\r\n", time.hour, time.minute, time.second);
     uint32_t data = 0;
     data = (time.hour & HR_MASK) << 12;
     data |= (time.minute & MINSEC_MASK) << 6;
     data |= (time.second & MINSEC_MASK);
-    //printf("Encoded time as uint32_t %d\n", data);
     multicore_fifo_push_blocking(data);
   } 
 }

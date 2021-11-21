@@ -1,19 +1,31 @@
+/*
+ * File:   core1.c
+ * Author: Richard Kendall
+ * Version: 1
+ * -----------------------
+ * Code to run on core 1
+ */
+
 #include "source.h"
 #include "core1.h"
 #include "pwm.h"
 
 #define MAX_PWM 1024
+#define STEPS_PER_LOOP 50
 
+// RGB LED pins
 #define LED1_RED 10
 #define LED1_GRN 11
 #define LED1_BLU 13
-#define LED2_RED 19
-#define LED2_GRN 17
-#define LED2_BLU 15
+#define LED2_RED 15 
+#define LED2_GRN 17 
+#define LED2_BLU 19 
 
+// LEDs
 const struct Led led1 = { .redpin = LED1_RED, .greenpin = LED1_GRN, .bluepin = LED1_BLU };
 const struct Led led2 = { .redpin = LED2_RED, .greenpin = LED2_GRN, .bluepin = LED2_BLU };
 
+// colours
 const struct Colour red = { .red = 1024, .green = 0, .blue = 0 };
 const struct Colour yellow = { .red = 1024, .green = 1024, .blue = 0 };
 const struct Colour green = { .red = 0, .green = 1024, .blue = 0 };
@@ -28,9 +40,7 @@ const struct Colour dimgreen = { .red = 0, .green = 512, .blue = 0 };
 const struct Colour dimred = { .red = 512, .green = 0, .blue = 0 };
 const struct Colour dimblue = { .red = 0, .green = 0, .blue = 256 };
 
-
-
-
+// the different patterns (which use the patterns above)
 const struct Pattern patterns[] = {
   /* 00 */ { .steps = 2, .stepdelay = 2, .fade = true, .led1colours = { red, green }, .led2colours = { green, red } },
   /* 01 */ { .steps = 3, .stepdelay = 1, .fade = true, .led1colours = { white, black, turq }, .led2colours = { turq, white, black } },
@@ -71,7 +81,17 @@ int pattern_step = 0;
 
 int last_hour = -1;
 
-// Core 1 interrupt Handler
+/*
+ * Function: core1_interrupt_handler
+ * ---------------------------------
+ * Handles time messages from core0
+ * 
+ * Time messages are encoded as integers, the time is recovered from this integer, bitmap as below
+ * 
+ * xxxxxxxxxxxxxxxHHHHHMMMMMMSSSSSS
+ * 
+ * returns: nothing
+ */
 void core1_interrupt_handler() {
   while (multicore_fifo_rvalid()){
     uint32_t raw = multicore_fifo_pop_blocking();
@@ -86,8 +106,8 @@ void core1_interrupt_handler() {
     if(hr + min + sec != 0) {
       if(hr != last_hour) {
         printf("Setting pattern %d\n", hr);
-        pattern = hr;
         pattern_step = 0;
+        pattern = hr;
         step = 0;
         last_hour = hr;
       }
@@ -120,7 +140,13 @@ void core1_interrupt_handler() {
   multicore_fifo_clear_irq(); // Clear interrupt
 }
 
-// Core 1 Main Code
+/*
+ * Function: core1_entry
+ * ---------------------
+ * Main method for core1, sets up interrupt handler and PWM
+ * 
+ * returns: nothing
+ */
 void core1_entry() {
   multicore_fifo_clear_irq();
   irq_set_exclusive_handler(SIO_IRQ_PROC1, core1_interrupt_handler);
@@ -134,7 +160,7 @@ void core1_entry() {
 
   while(true) {
     // get max step count
-    int maxstep = patterns[pattern].stepdelay * 50;
+    int maxstep = patterns[pattern].stepdelay * STEPS_PER_LOOP;
     bool fade = patterns[pattern].fade;
 
     // handle led1
@@ -144,7 +170,7 @@ void core1_entry() {
     fade_between(led2, from_led2, to_led2, maxstep, fade ? step : maxstep, MAX_PWM);
 
     step++;
-    sleep_ms(20);
+    sleep_ms(1000 / STEPS_PER_LOOP);
     //tight_loop_contents();
   }
 }
